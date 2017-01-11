@@ -11,8 +11,8 @@
     <iconUrl>http://serilog.net/images/serilog-sink-nuget.png</iconUrl>
     <tags>serilog logging Raygun.io error</tags>
     <dependencies>
-      <dependency id="Serilog" version="1.5" />
-      <dependency id="Mindscape.Raygun4Net.Signed" version="2.0.4" />
+      <dependency id="Serilog" version="2.3.0" />
+      <dependency id="Mindscape.Raygun4Net.Signed" version="5.4.1" />
     </dependencies>
   </metadata>
 </package>
