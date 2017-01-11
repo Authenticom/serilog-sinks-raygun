@@ -49,7 +49,7 @@ namespace Serilog
             IFormatProvider formatProvider = null,
             IEnumerable<string> tags = null,
             IEnumerable<string> ignoredFormFieldNames = null,
-            string groupKeyProperty = null)
+            string groupKeyProperty = "GroupKey")
         {
             if (loggerConfiguration == null) throw new ArgumentNullException("loggerConfiguration");
 

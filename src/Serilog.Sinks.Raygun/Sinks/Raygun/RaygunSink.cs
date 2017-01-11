@@ -68,7 +68,7 @@ namespace Serilog.Sinks.Raygun
             string applicationVersionProperty = "ApplicationVersion",
             IEnumerable<string> tags = null,
             IEnumerable<string> ignoredFormFieldNames = null,
-            string groupKeyProperty = null)
+            string groupKeyProperty = "GroupKey")
         {
             if (string.IsNullOrEmpty(applicationKey))
                 throw new ArgumentNullException("applicationKey");
@@ -102,10 +102,10 @@ namespace Serilog.Sinks.Raygun
             properties.Add("RenderedLogMessage", logEvent.RenderMessage(_formatProvider));
             properties.Add("LogMessageTemplate", logEvent.MessageTemplate.Text);
 
-            // Wire up the CustomGroupingKey event if the custom group key property has been defined and has a non-null value
-            object customGroup;
-            if (!String.IsNullOrEmpty(_groupKeyProperty) && properties.TryGetValue(_groupKeyProperty, out customGroup) && !String.IsNullOrEmpty(customGroup.ToString()))
-                _client.CustomGroupingKey += (sender, args) => { OnGrouping(sender, args, new MessageGroup { GroupKey = customGroup.ToString() }); };
+            // Wire up the CustomGroupingKey event if the custom group key property has been defined
+            object customGroup = null;
+            if (!String.IsNullOrEmpty(_groupKeyProperty) && properties.TryGetValue(_groupKeyProperty, out customGroup))
+                _client.CustomGroupingKey += (sender, args) => { OnGrouping(sender, args, new MessageGroup {GroupKey = customGroup.ToString()}); };
 
             // Create new message
             var raygunMessage = new RaygunMessage
