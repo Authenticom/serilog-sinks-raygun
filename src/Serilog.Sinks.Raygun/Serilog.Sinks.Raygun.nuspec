@@ -17,5 +17,5 @@
                 <dependency id="Mindscape.Raygun4Net.Signed" version="5.4.1" />
             </group>
         </dependencies>
-    </metadata>    
+    </metadata>
 </package>
