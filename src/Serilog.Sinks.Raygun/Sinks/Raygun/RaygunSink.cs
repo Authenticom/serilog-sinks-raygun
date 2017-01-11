@@ -60,7 +60,7 @@ namespace Serilog.Sinks.Raygun
     /// <param name="applicationVersionProperty">Specifies the property to use to retrieve the application version from. You can use an enricher to add the application version to all the log events. When you specify null, Raygun will use the assembly version.</param>
     /// <param name="tags">Specifies the tags to include with every log message. The log level will always be included as a tag.</param>
     /// <param name="ignoredFormFieldNames">Specifies the form field names which to ignore when including request form data.</param>
-    /// <param name="groupKeyProperty">The property containing the custom group key for the Raygun message. See https://raygun.com/docs/languages/net#custom-grouping </param>
+    /// <param name="groupKeyProperty">The property containing the custom group key for the Raygun message.</param>
     public RaygunSink(IFormatProvider formatProvider,
         string applicationKey,
         IEnumerable<Type> wrapperExceptions = null,
