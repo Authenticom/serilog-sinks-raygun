@@ -83,6 +83,9 @@ namespace Serilog.Sinks.Raygun
             _client = new RaygunClient(applicationKey);
             if (wrapperExceptions != null)
                 _client.AddWrapperExceptions(wrapperExceptions.ToArray());
+
+            // Wire up the CustomGroupingKey event
+            _client.CustomGroupingKey += OnGrouping;
         }
 
         /// <summary>
@@ -101,11 +104,6 @@ namespace Serilog.Sinks.Raygun
             // Add the message 
             properties.Add("RenderedLogMessage", logEvent.RenderMessage(_formatProvider));
             properties.Add("LogMessageTemplate", logEvent.MessageTemplate.Text);
-
-            // Wire up the CustomGroupingKey event if the custom group key property has been defined
-            object customGroup = null;
-            if (!String.IsNullOrEmpty(_groupKeyProperty) && properties.TryGetValue(_groupKeyProperty, out customGroup))
-                _client.CustomGroupingKey += (sender, args) => { OnGrouping(sender, args, new MessageGroup {GroupKey = customGroup.ToString()}); };
 
             // Create new message
             var raygunMessage = new RaygunMessage
@@ -155,13 +153,17 @@ namespace Serilog.Sinks.Raygun
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="RaygunCustomGroupingKeyEventArgs" /> instance containing the event data.</param>
-        /// <param name="group">The custom group object containing the key</param>
-        protected virtual void OnGrouping(object sender, RaygunCustomGroupingKeyEventArgs e, IMessageGroup group)
+        protected virtual void OnGrouping(object sender, RaygunCustomGroupingKeyEventArgs e)
         {
-            if (!String.IsNullOrEmpty(group.GroupKey))
-                e.CustomGroupingKey = group.GroupKey;
+            // search the custom data for the key
+            var customKey = e.Message.Details.UserCustomData[_groupKeyProperty];
+            if (customKey == null)
+                return;
 
-            Grouping?.Invoke(this, e, group);
+            // assign the custom key
+            e.CustomGroupingKey = customKey.ToString();
+            // invoke the custom event for unit testing
+            Grouping?.Invoke(this, e, new MessageGroup {GroupKey = customKey.ToString()});
         }
     }
 }
