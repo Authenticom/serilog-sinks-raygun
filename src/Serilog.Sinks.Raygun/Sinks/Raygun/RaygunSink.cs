@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -29,26 +30,14 @@ namespace Serilog.Sinks.Raygun
     /// </summary>
     public class RaygunSink : ILogEventSink
     {
-        readonly IFormatProvider _formatProvider;
-        readonly string _userNameProperty;
-        readonly string _applicationVersionProperty;
-        readonly IEnumerable<string> _tags;
-        readonly IEnumerable<string> _ignoredFormFieldNames;
-        readonly string _groupKeyProperty;
-        readonly RaygunClient _client;
-
-        /// <summary>
-        /// Grouping event delegate
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The <see cref="RaygunCustomGroupingKeyEventArgs"/> instance containing the event data.</param>
-        /// <param name="group">The custom group object containing the custom group key</param>
-        public delegate void Grouped(object sender, RaygunCustomGroupingKeyEventArgs e, IMessageGroup group);
-
-        /// <summary>
-        /// Occurs when the Raygun client fires the CustomGroupKey event.
-        /// </summary>
-        public event Grouped Grouping;
+        private readonly IFormatProvider _formatProvider;
+        private readonly string _userNameProperty;
+        private readonly string _applicationVersionProperty;
+        private readonly IEnumerable<string> _tags;
+        private readonly IEnumerable<string> _ignoredFormFieldNames;
+        private readonly string _groupKeyProperty;
+        private readonly string _tagsProperty;
+        private readonly RaygunClient _client;
 
         /// <summary>
         /// Construct a sink that saves errors to the Raygun.io service. Properties are being send as userdata and the level is included as tag. The message is included inside the userdata.
@@ -61,6 +50,7 @@ namespace Serilog.Sinks.Raygun
         /// <param name="tags">Specifies the tags to include with every log message. The log level will always be included as a tag.</param>
         /// <param name="ignoredFormFieldNames">Specifies the form field names which to ignore when including request form data.</param>
         /// <param name="groupKeyProperty">The property containing the custom group key for the Raygun message.</param>
+        /// <param name="tagsProperty">The property where additional tags are stored when emitting log events</param>
         public RaygunSink(IFormatProvider formatProvider,
             string applicationKey,
             IEnumerable<Type> wrapperExceptions = null,
@@ -68,7 +58,8 @@ namespace Serilog.Sinks.Raygun
             string applicationVersionProperty = "ApplicationVersion",
             IEnumerable<string> tags = null,
             IEnumerable<string> ignoredFormFieldNames = null,
-            string groupKeyProperty = "GroupKey")
+            string groupKeyProperty = "GroupKey",
+            string tagsProperty = "Tags")
         {
             if (string.IsNullOrEmpty(applicationKey))
                 throw new ArgumentNullException("applicationKey");
@@ -79,13 +70,11 @@ namespace Serilog.Sinks.Raygun
             _tags = tags ?? new string[0];
             _ignoredFormFieldNames = ignoredFormFieldNames ?? Enumerable.Empty<string>();
             _groupKeyProperty = groupKeyProperty;
+            _tagsProperty = tagsProperty;
 
             _client = new RaygunClient(applicationKey);
             if (wrapperExceptions != null)
                 _client.AddWrapperExceptions(wrapperExceptions.ToArray());
-
-            // Wire up the CustomGroupingKey event
-            _client.CustomGroupingKey += OnGrouping;
         }
 
         /// <summary>
@@ -137,6 +126,19 @@ namespace Serilog.Sinks.Raygun
             raygunMessage.Details.UserCustomData = properties;
             raygunMessage.Details.MachineName = Environment.MachineName;
 
+            // Add the custom group key when provided
+            object customKey;
+            if (properties.TryGetValue(_groupKeyProperty, out customKey))
+                raygunMessage.Details.GroupingKey = customKey.ToString();
+
+            // Add additional custom tags
+            object eventTags;
+            if (properties.TryGetValue(_tagsProperty, out eventTags) && eventTags is object[])
+            {
+                foreach (var tag in (object[])eventTags)
+                    raygunMessage.Details.Tags.Add(tag.ToString());
+            }
+
             if (HttpContext.Current != null)
             {
                 // Request message is built here instead of raygunClient.Send so RequestMessageOptions have to be constructed here
@@ -146,24 +148,6 @@ namespace Serilog.Sinks.Raygun
 
             // Submit
             _client.Send(raygunMessage);
-        }
-
-        /// <summary>
-        /// Even trigger for custom Grouping event
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The <see cref="RaygunCustomGroupingKeyEventArgs" /> instance containing the event data.</param>
-        protected virtual void OnGrouping(object sender, RaygunCustomGroupingKeyEventArgs e)
-        {
-            // search the custom data for the key
-            var customKey = e.Message.Details.UserCustomData[_groupKeyProperty];
-            if (customKey == null)
-                return;
-
-            // assign the custom key
-            e.CustomGroupingKey = customKey.ToString();
-            // invoke the custom event for unit testing
-            Grouping?.Invoke(this, e, new MessageGroup {GroupKey = customKey.ToString()});
         }
     }
 }

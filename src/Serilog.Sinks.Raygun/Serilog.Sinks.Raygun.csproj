@@ -63,8 +63,6 @@
     <Compile Include="..\..\assets\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="Sinks\Raygun\IMessageGroup.cs" />
-    <Compile Include="Sinks\Raygun\MessageGroup.cs" />
     <Compile Include="Sinks\Raygun\RaygunPropertyFormatter.cs" />
     <Compile Include="Sinks\Raygun\RaygunSink.cs" />
   </ItemGroup>
