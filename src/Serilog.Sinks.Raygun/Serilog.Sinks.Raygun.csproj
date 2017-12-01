@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>Michiel van Oudheusden</Authors>
     <Company>Serilog</Company>
@@ -19,9 +19,16 @@
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
   </PropertyGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
+    <PackageReference Include="Mindscape.Raygun4Net" Version="5.5.2" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="mindscape.Raygun4Net.AspNetCore" Version="5.5.0" />
+  </ItemGroup>
 
-  <ItemGroup>
-	<PackageReference Include="mindscape.Raygun4Net.AspNetCore" Version="5.5.0" />
+  <ItemGroup>	
 	<PackageReference Include="Serilog" Version="2.5.0" />
   </ItemGroup>
 

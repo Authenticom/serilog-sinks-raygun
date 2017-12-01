@@ -138,7 +138,11 @@ namespace Serilog.Sinks.Raygun
             }
 
             // Submit
+#if NETSTANDARD2_0
             _client.Send(raygunMessage).Wait();
+#else
+            _client.Send(raygunMessage);
+#endif
         }
     }
 }
